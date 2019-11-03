@@ -84,6 +84,7 @@ class ModelWrapper:
             tokens_prefix: List[str],
             tokens_to_generate: int,
             top_k: int,
+            temperature: 0.8
             ) -> List[str]:
         tokens = list(tokens_prefix)
 
@@ -94,12 +95,24 @@ class ModelWrapper:
 
             # convert log probs to real probs
             logprobs = np.array(list(map(lambda a: a[0], ntk)))
-            probs = np.exp(logprobs) / np.exp(logprobs).sum()
 
-            # pick next token randomly according to probs distribution
-            next_token_n = np.random.choice(top_k, p=probs)
-            next_token = ntk[next_token_n][1]
-            
+            if temperature > 0:
+                # Dividim per la temperatura
+                temp_probs = np.array(logprobs) / temperature
+
+                # Convertim de logaritme a exponencial
+                exp_probs = np.exp(temp_probs)
+
+                # Normalitzem perquè np.random.choice necessita que la suma sigui 1
+                norm_probs = exp_probs / np.linalg.norm(exp_probs, ord=1)
+
+                # pick next token randomly according to probs distribution
+                next_token_n = np.random.choice(top_k, p=norm_probs)
+                next_token = ntk[next_token_n][1]
+            else:
+                choice_idx = np.argmax(logprobs)
+                next_token = ntk[choice_idx][1]
+
             tokens.append(next_token)
 
         return tokens

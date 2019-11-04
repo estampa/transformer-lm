@@ -81,9 +81,8 @@ class ModelWrapper:
         for what would come after the last token.
         """
         next_log_probs = self.get_log_probs(tokens)[-1]
-        return sorted([(float(next_log_probs[i]), self.id_to_token(i))
-                       for i in next_log_probs.argsort()[-top_k:]],
-                      reverse=True)
+        next_k_log_probs = torch.topk(next_log_probs, k=top_k)
+        return next_k_log_probs
 
     def generate_tokens(
             self,
@@ -97,27 +96,26 @@ class ModelWrapper:
         for i in range(tokens_to_generate):
 
             # generate TOP_K potential next tokens
-            ntk = self.get_next_top_k(tokens[- self.model.hparams.n_ctx:], top_k)
-
-            # convert log probs to real probs
-            logprobs = np.array(list(map(lambda a: a[0], ntk)))
-
+            ntk_values, ntk_indices = self.get_next_top_k(tokens[- self.model.hparams.n_ctx:], top_k)
             if temperature > 0:
                 # Dividim per la temperatura
-                temp_probs = np.array(logprobs) / temperature
+                ntk_values_temp = torch.div(ntk_values, temperature)
 
                 # Convertim de logaritme a exponencial
-                exp_probs = np.exp(temp_probs)
+                ntk_values_exp = torch.exp(ntk_values_temp)
 
-                # Normalitzem perquè np.random.choice necessita que la suma sigui 1
-                norm_probs = exp_probs / np.linalg.norm(exp_probs, ord=1)
+                # Normalitzem
+                ntk_values_exp_sum = torch.sum(ntk_values_exp)
+                ntk_values_mult = torch.div(ntk_values_exp, ntk_values_exp_sum)
 
-                # pick next token randomly according to probs distribution
-                next_token_n = np.random.choice(top_k, p=norm_probs)
-                next_token = ntk[next_token_n][1]
+                # Escollim un token en base a la distribució de probabilitats
+                ntk_selected = torch.multinomial(ntk_values_mult, 1)
+                next_token_n = ntk_indices[ntk_selected]
+                next_token = self.id_to_token(next_token_n)
             else:
-                choice_idx = np.argmax(logprobs)
-                next_token = ntk[choice_idx][1]
+                # Escollim el token més probable (el primer, estan ordenats)
+                next_token_n = ntk_indices[0]
+                next_token = self.id_to_token(next_token_n)
 
             tokens.append(next_token)
 

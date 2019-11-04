@@ -91,7 +91,7 @@ class ModelWrapper:
         for i in range(tokens_to_generate):
 
             # generate TOP_K potential next tokens
-            ntk = self.get_next_top_k(tokens, top_k)
+            ntk = self.get_next_top_k(tokens[- self.model.hparams.n_ctx:], top_k)
 
             # convert log probs to real probs
             logprobs = np.array(list(map(lambda a: a[0], ntk)))

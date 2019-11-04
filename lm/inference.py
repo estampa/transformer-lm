@@ -119,6 +119,9 @@ class ModelWrapper:
 
             tokens.append(next_token)
 
+            if next_token == END_OF_TEXT:
+                break
+
         return tokens
 
 

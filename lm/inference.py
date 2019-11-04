@@ -14,11 +14,12 @@ class ModelWrapper:
     END_OF_LINE = END_OF_LINE
     END_OF_TEXT = END_OF_TEXT
 
-    def __init__(self, model: Model, sp_model: spm.SentencePieceProcessor,
+    def __init__(self, model: Model, sp_model: spm.SentencePieceProcessor, device,
                  params: Optional[Dict]):
         self.model = model
         self.sp_model = sp_model
         self.params = params or {}
+        self.device = device
 
     @classmethod
     def load(cls, root: Path):
@@ -27,13 +28,17 @@ class ModelWrapper:
         params = json.loads((root / 'params.json').read_text())
         hparams = params['hparams']
         hparams.setdefault('n_hidden', hparams['n_embed'])
-        model = Model(HParams(**hparams))
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        else:
+            device = torch.device('cpu')
+        model = Model(HParams(**hparams)).to(device)
         state = torch.load(root / 'model.pt', map_location='cpu')
         state_dict = fixed_state_dict(state['state_dict'])
         model.load_state_dict(state_dict)
         if 'seen_tokens' in state:
             params['seen_tokens'] = state['seen_tokens']
-        return cls(model, sp_model, params=params)
+        return cls(model, sp_model, device, params=params)
 
     def tokenize(self, s: str) -> List[str]:
         return self.sp_model.EncodeAsPieces(s)
@@ -55,6 +60,7 @@ class ModelWrapper:
         ids = [self.token_to_id(t) for t in tokens]
         ctx = torch.LongTensor(ids).unsqueeze(0)
         with torch.no_grad():
+            ctx = ctx.to(device=self.device)
             logits = self.model(ctx)['logits'].squeeze(0)
             return torch.log_softmax(logits, dim=1)
 

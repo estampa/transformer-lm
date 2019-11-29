@@ -25,7 +25,7 @@ def find_similar(text, folder):
                 # print("--\n" + linia + "\n" + closest + "\n" + closest_file[:48] + " - " + str(closest_dist))
 
 
-def gen_main(model_path, prefix, tokens_to_generate=42, top_k=32, temperature=0.8, context="", originals=""):
+def gen_main(model_path, prefix, tokens_to_generate=42, top_k=32, temperature=0.8, num=1, context="", originals=""):
     print(f'loading model from {model_path}')
     mw = ModelWrapper.load(Path(model_path))
 
@@ -36,13 +36,15 @@ def gen_main(model_path, prefix, tokens_to_generate=42, top_k=32, temperature=0.
         context_tokens = []
     tokens = [END_OF_TEXT] + context_tokens + mw.tokenize(str(prefix))
 
-    tokens_gen = mw.generate_tokens(tokens, tokens_to_generate, top_k, temperature)
-    # print(mw.sp_model.DecodePieces(tokens_gen))  # No mostra salts de línia
-    text_gen = "".join(tokens_gen[len(context_tokens):]).replace("▁", " ").replace(END_OF_LINE, "\n").replace(END_OF_TEXT, "")
-    print(text_gen)
+    for _ in range(0,num):
+        tokens_gen = mw.generate_tokens(tokens, tokens_to_generate, top_k, temperature)
+        # print(mw.sp_model.DecodePieces(tokens_gen))  # No mostra salts de línia
+        text_gen = "".join(tokens_gen[len(context_tokens):]).replace("▁", " ").replace(END_OF_LINE, "\n").replace(END_OF_TEXT, "")
+        print("----")
+        print(text_gen)
 
-    if originals:
-        find_similar(text_gen[len(context_tokens):], originals)
+        if originals:
+            find_similar(text_gen[len(context_tokens):], originals)
 
 
 def fire_gen_main():

@@ -26,7 +26,7 @@ def find_similar(text, folder):
                 # print("--\n" + linia + "\n" + closest + "\n" + closest_file[:48] + " - " + str(closest_dist))
 
 
-def gen_main(model_path, prefix, tokens_to_generate=42, top_k=32, temperature=0.8, num=1, context="", save=False, originals=""):
+def gen_main(model_path, prefix, tokens_to_generate=200, top_k=32, temperature=0.8, num=1, context="", save=False, originals=""):
     print(f'loading model from {model_path}')
     mw = ModelWrapper.load(Path(model_path))
 

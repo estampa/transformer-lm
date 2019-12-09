@@ -16,13 +16,13 @@ def find_similar(text, folder):
     seqfind = sequence_common.SequenceFinder(folder)
     seqfind.use_cosine()
     # linies = re.split("[\n\.]", text_net[len(context):])
-    linies = re.split("[\n]", text)
+    linies = re.split("[\.\n]", text)
     for linia in linies:
         if linia.strip() and len(linia.strip()) > 1:
             closest, closest_dist, closest_file = seqfind.closest_cosine(linia)
             # print(closest)
-            if closest_dist < 0.4:
-                print("{:<64} | {:2f} {:<48} ({})".format(linia, round(closest_dist, 2), closest[:48], closest_file[:64]))
+            if closest_dist < 0.3:
+                print("{:<64} | {:2f} {:<64} ({})".format(linia, round(closest_dist, 2), closest[:64], closest_file[:64]))
                 # print("--\n" + linia + "\n" + closest + "\n" + closest_file[:48] + " - " + str(closest_dist))
 
 

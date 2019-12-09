@@ -22,7 +22,7 @@ def find_similar(text, folder):
             closest, closest_dist, closest_file = seqfind.closest_cosine(linia)
             # print(closest)
             if closest_dist < 0.3:
-                print("{:<64} | {:2f} {:<64} ({})".format(linia, round(closest_dist, 2), closest[:64], closest_file[:64]))
+                print("\n* {:<64} | {:2f} {:<64} ({})".format(linia[:64], round(closest_dist, 2), closest[:64], closest_file[:64]))
                 # print("--\n" + linia + "\n" + closest + "\n" + closest_file[:48] + " - " + str(closest_dist))
 
 

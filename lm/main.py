@@ -205,7 +205,7 @@ def main(
 
     def train():
         nonlocal seen_tokens
-        epoch_size = len(train_dataset) // step_tokens * step_tokens
+        epoch_size = max(1, len(train_dataset) // step_tokens * step_tokens)
         pbar = tqdm.trange(
             epochs, desc='epochs', dynamic_ncols=True, disable=not is_main)
         init_epoch_pbar = lambda: tqdm.trange(
